@@ -1,0 +1,2 @@
+The idea of this project to build a video chatting program that utilize content aware compression that will be build on top of existing video encoders such  H.264.
+The program relays on OpenCV library for object detection and image  manipulations.
