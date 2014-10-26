@@ -23,6 +23,8 @@ class ROI{
     std::vector<cv::CascadeClassifier> cascades;
     
     std::vector<cv::Rect> roi_rects;
+    std::vector<unsigned char> block_importance;
+    std::vector<unsigned char> user_importance;
     cv::Mat frame_gray;
     VideoCommunication *vc;
     
@@ -34,7 +36,7 @@ public:
     ROI(VideoCommunication *vc);
     void  analyze(const cv::Mat &frame);
     //void splitBlocks(std::vector<Block> &input, std::vector<Block> &roiBlocks, std::vector<Block> &nonRoiBlocks);
-    int addCascade(cv::string xml_url);
+    int addCascade(cv::string xml_url, unsigned char importance);
     
     friend class VideoCommunication;
 };

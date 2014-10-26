@@ -2,6 +2,7 @@
  Here's a small IPv4 example: it asks for a portbase and a destination and
  starts sending packets to that destination.
  */
+/*
 
 #include "rtpsession.h"
 #include "rtpudpv4transmitter.h"
@@ -142,4 +143,4 @@ int main(void)
 #endif // WIN32
 	return 0;
 }
-
+*/

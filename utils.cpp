@@ -361,6 +361,7 @@ unsigned long VideoCommunication::sendBlocks(){
 
 void VideoCommunication::getBlocks( const cv::Mat& Frame){
     //Block *bl;
+    unsigned tmp;
     unsigned sq_number = 0;
     unsigned blockSize = this->params.blockSize;
     cv::Mat tempMat;
@@ -379,10 +380,13 @@ void VideoCommunication::getBlocks( const cv::Mat& Frame){
             bl.setBlockSize(blockSize);
             bl.setSqId(sq_number);
             
-            if(roi.isInRoi(bl))
-                bl.setCompParams(0);
-            else
-                bl.setCompParams(3);
+            //if(roi.isInRoi(bl))
+            //    bl.setCompParams(0);
+            //else
+            //    bl.setCompParams(3);
+            tmp = roi.isInRoi(bl);
+            bl.setCompParams(2 - roi.isInRoi(bl));
+            
             imageBlocks.at(sq_number) = bl;
             sq_number++;
         }
