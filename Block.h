@@ -12,6 +12,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <stdio.h>
+#include <memory>
 
 #define BLOCK_HEADER_LENGTH 4
 #define SIDE_SIZE(BLOCK_SIZE)  ((BLOCK_SIZE) % 32 ? ((BLOCK_SIZE) % 16 ? ((BLOCK_SIZE) % 8 ? ((BLOCK_SIZE) % 4 ? ((BLOCK_SIZE) % 2 ? 1 : 2) : 4) : 8) : 16) : 32) 

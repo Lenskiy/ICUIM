@@ -112,7 +112,7 @@ VideoCommunication::VideoCommunication():roi(this),compress(this){
     socket_to_send = 0;
 }
 
-VideoCommunication::VideoCommunication(unsigned short port_send, unsigned short port_recv, const std::string ip_address):roi(this),compress(this){
+VideoCommunication::VideoCommunication(unsigned short port_send, unsigned short port_recv, const std::string ip_address):roi(this),compress(this),block_length(0),contBlock(0){
     socket_to_send = 0;
     socket_to_recv = 0;
     curBeginning = 0;
@@ -123,7 +123,7 @@ VideoCommunication::VideoCommunication(unsigned short port_send, unsigned short 
     if(ip_address.length() > 0)
         networkInit(port_recv, port_send, ip_address);
     else
-        networkInit(port_recv, port_send, "127.0.0.1");
+        networkInit(port_recv, port_send, "127.0.0.1");//10.72.51.86 //10.72.51.103 maxim
 }
 
 VideoCommunication::~VideoCommunication(){
@@ -179,31 +179,31 @@ void VideoCommunication::networkInit(unsigned short port_send, unsigned short po
         printf("%s", gai_strerror(err));
         abort();
     }
-    
+
     if((socket_to_recv = socket(res_serv_addr->ai_family, res_serv_addr->ai_socktype, res_serv_addr->ai_protocol)) < 0){
         printf("\n Error : Could not create socket \n");
         abort();
     }
     
-    int tos=5;
-    socklen_t toslen=0;
+//    int tos=5;
+//    socklen_t toslen=0;
+//    
+//    if (setsockopt(socket_to_recv, IPPROTO_IP, IP_TOS,  &tos, sizeof(toslen)) < 0) {
+//        perror("error to get option");
+//    }else {
+//        printf ("changing tos opt = %d\n",tos);
+//    }
+//
+//    
+//    tos = 0;
+//    if (getsockopt(socket_to_recv, IPPROTO_IP, IP_TOS,  &tos, &toslen) < 0) {
+//        perror("error to get option");
+//    }else {
+//        printf ("current tos opt = %d\n",tos);
+//    }
+//    
     
-    if (setsockopt(socket_to_recv, IPPROTO_IP, IP_TOS,  &tos, sizeof(toslen)) < 0) {
-        perror("error to get option");
-    }else {
-        printf ("changing tos opt = %d\n",tos);
-    }
-
-    
-    tos = 0;
-    if (getsockopt(socket_to_recv, IPPROTO_IP, IP_TOS,  &tos, &toslen) < 0) {
-        perror("error to get option");
-    }else {
-        printf ("current tos opt = %d\n",tos);
-    }
-    
-    
-    int buf_size = 1500000;
+    int buf_size = 800000;
     socklen_t buf_size_len=0;
     if (setsockopt(socket_to_recv, SOL_SOCKET, SO_RCVBUF, &buf_size, sizeof(int)) == -1) {
         fprintf(stderr, "Error setting socket opts: %s\n", strerror(errno));
@@ -223,7 +223,7 @@ void VideoCommunication::networkInit(unsigned short port_send, unsigned short po
     clie_addr.ai_protocol = IPPROTO_UDP;
     clie_addr.ai_flags = AI_PASSIVE|AI_ADDRCONFIG;
     sprintf(port_str, "%d", port_send);
-    err = getaddrinfo(NULL, port_str, &clie_addr, &res_clie_addr);
+    err = getaddrinfo(ip_address.c_str(), port_str, &clie_addr, &res_clie_addr); /////////////
     if (err!=0) {
         printf("%s", gai_strerror(err));
         abort();
@@ -233,24 +233,24 @@ void VideoCommunication::networkInit(unsigned short port_send, unsigned short po
         abort();
     }
     
-    if (setsockopt(socket_to_send, SOL_SOCKET, SO_RCVBUF, &buf_size, sizeof(int)) == -1) {
-        fprintf(stderr, "Error setting socket opts: %s\n", strerror(errno));
-    }
-    
-    tos=5;
-    if (setsockopt(socket_to_send, IPPROTO_IP, IP_TOS,  &tos, sizeof(toslen)) < 0) {
-        perror("error to get option");
-    }else {
-        printf ("changing tos opt = %d\n",tos);
-    }
-    
-    
-    //tos = 0;
-    if (getsockopt(socket_to_send, IPPROTO_IP, IP_TOS,  &tos, &toslen) < 0) {
-        perror("error to get option");
-    }else {
-        printf ("current tos opt = %d\n",tos);
-    }
+//    if (setsockopt(socket_to_send, SOL_SOCKET, SO_RCVBUF, &buf_size, sizeof(int)) == -1) {
+//        fprintf(stderr, "Error setting socket opts: %s\n", strerror(errno));
+//    }
+//    
+//    tos=5;
+//    if (setsockopt(socket_to_send, IPPROTO_IP, IP_TOS,  &tos, sizeof(toslen)) < 0) {
+//        perror("error to get option");
+//    }else {
+//        printf ("changing tos opt = %d\n",tos);
+//    }
+//    
+//    
+//    //tos = 0;
+//    if (getsockopt(socket_to_send, IPPROTO_IP, IP_TOS,  &tos, &toslen) < 0) {
+//        perror("error to get option");
+//    }else {
+//        printf ("current tos opt = %d\n",tos);
+//    }
     
 }
 
@@ -323,15 +323,15 @@ unsigned VideoCommunication::receiveBlocks(){
 
 void VideoCommunication::sendBlock(const Block &bl){
 //send block as one paket
-    int tos;
-    if (bl.getCompParams() != 0)
-        tos = 0;
-    else
-        tos = 7;
-    
-    if (setsockopt(socket_to_send, IPPROTO_IP, IP_TOS,  &tos, sizeof(tos)) < 0)
-        perror("error to get option");
-    else
+//    int tos;
+//    if (bl.getCompParams() != 0)
+//        tos = 0;
+//    else
+//        tos = 7;
+//    
+//    if (setsockopt(socket_to_send, IPPROTO_IP, IP_TOS,  &tos, sizeof(tos)) < 0)
+//        perror("error to get option");
+//    else
         ;//printf ("changing tos opt = %d\n",tos);
 
     if((num_byte_sent = sendto(socket_to_send, bl.data.operator->(), bl.getSize(), 0, res_clie_addr->ai_addr, res_clie_addr->ai_addrlen)) != bl.getSize()){
@@ -438,7 +438,9 @@ void VideoCommunication::transmit(){
     videoSource.grab();
     videoSource.retrieve(sendFrame);
     int blocks_sent = 0;
+    //unsigned long t1;
     do{
+        //t1 = clock();
         getBlocks(sendFrame);
         blocks_sent = sendBlocks();
         //printf("Blocks sent: %d\n", blocks_sent);
@@ -446,6 +448,7 @@ void VideoCommunication::transmit(){
         if( cv::waitKey(33) >= 0 ) break;
         sendFrame.release();
         videoSource.grab();
+        //printf("%lf\n",(double)(clock() - t1)/CLOCKS_PER_SEC);
     }while (videoSource.retrieve(sendFrame));
 }
 

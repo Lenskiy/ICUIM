@@ -11,7 +11,7 @@
 
 ROI::ROI(VideoCommunication *vc):vc(vc){}
 
-int ROI::addCascade(cv::string xml_url, unsigned char imp){
+int ROI::addCascade(std::string xml_url, unsigned char imp){
     cv::CascadeClassifier cc;
     cascades.push_back(cc);
     if( !cascades.back().load( xml_url ) ){ printf("--(!)Error loading\n"); cascades.pop_back(); return -1; };
@@ -29,7 +29,7 @@ void ROI::analyze(const cv::Mat &frame){
     
     
     for (int i = 0; i < cascades.size(); i++){
-        cascades.at(i).detectMultiScale(frame_gray, temp_rects, 1.1, 3, 0|CV_HAAR_SCALE_IMAGE, cv::Size(10, 10) );
+        cascades.at(i).detectMultiScale(frame_gray, temp_rects, 1.1, 3, 0|cv::CASCADE_SCALE_IMAGE, cv::Size(10, 10) );
         roi_rects.insert(roi_rects.end(), temp_rects.begin(), temp_rects.end());
         for (int j = 0; j < temp_rects.size(); j++)
             block_importance.insert(block_importance.end(), user_importance.at(i));

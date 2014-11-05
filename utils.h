@@ -12,6 +12,8 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/objdetect/objdetect.hpp>
+//#include <opencv/highgui.h>
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -71,8 +73,8 @@ private:
     struct addrinfo clie_addr, *res_clie_addr;
     struct sockaddr temp_addr;
 
-    unsigned long block_length = 0;
-    char *contBlock = NULL;
+    unsigned long block_length;
+    char *contBlock;
     
     std::vector<Block> imageBlocks;     //container for blocks to be sent
     std::vector<Block> blocksReceieved; //container for blocks to be received

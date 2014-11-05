@@ -36,7 +36,7 @@ public:
     ROI(VideoCommunication *vc);
     void  analyze(const cv::Mat &frame);
     //void splitBlocks(std::vector<Block> &input, std::vector<Block> &roiBlocks, std::vector<Block> &nonRoiBlocks);
-    int addCascade(cv::string xml_url, unsigned char importance);
+    int addCascade(std::string xml_url, unsigned char importance);
     
     friend class VideoCommunication;
 };
