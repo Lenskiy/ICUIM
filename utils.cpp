@@ -83,6 +83,8 @@ Block &Resample::compress(Block &bl){
  return bl;
  */
 Block &Resample::decompress(Block &bl){
+    //unsigned compressedSized = bl.getBlockSize() / (1 << bl.getCompParams());
+    
     unsigned unCompressedSized = bl.getBlockSize() * (1 << bl.getCompParams());
     cv::Mat temp;
     cv::resize(bl.mat, temp, cv::Size(unCompressedSized, unCompressedSized)); //, 0, 0, cv::INTER_LANCZOS4  //Upsample
@@ -203,7 +205,7 @@ void VideoCommunication::networkInit(unsigned short port_send, unsigned short po
 //    }
 //    
     
-    int buf_size = 800000;
+    int buf_size = 1500000;
     socklen_t buf_size_len=0;
     if (setsockopt(socket_to_recv, SOL_SOCKET, SO_RCVBUF, &buf_size, sizeof(int)) == -1) {
         fprintf(stderr, "Error setting socket opts: %s\n", strerror(errno));
@@ -292,7 +294,9 @@ Block &VideoCommunication::receiveBlock(Block &bl){
 //        printf("\n%d",bl.mat.isContinuous());
 //    }
     bl.total_block_length = num_byte_recv; //initialize total block length
-    bl.mat = bl.mat.reshape(0, bl.getBlockSize());
+    cv::Mat temp(bl.getBlockSize(), bl.getBlockSize(), CV_8UC3, bl.mat.data);
+    bl.mat = temp;
+    //bl.mat = bl.mat.reshape(0, bl.getBlockSize());
     //printf("%d\t%d\t%d\n", bl.getSqId(), bl.getBlockSize(), bl.getCompParams());
     return bl;
     
@@ -393,9 +397,14 @@ void VideoCommunication::getBlocks( const cv::Mat& Frame){
         }
     }
     
-    for (unsigned i = 0; i < numOfBlocksPerFrame; i++)
-        compress.decompress(compress.compress(imageBlocks.at(i))); //////////////////////// check is we send sqe = 0
-    
+//    printf("(%d)\n", imageBlocks.at(100).getSqId());
+//    printf("(%d)\n", imageBlocks.at(100).getBlockSize());
+//    printf("(%d)\n", imageBlocks.at(100).getCompParams());
+    //for (unsigned i = 0; i < numOfBlocksPerFrame; i++)
+    //    compress.decompress(compress.compress(imageBlocks.at(i))); //////////////////////// check is we send sqe = 0
+//    printf("(%d)\n", imageBlocks.at(100).getSqId());
+//    printf("(%d)\n", imageBlocks.at(100).getBlockSize());
+//    printf("(%d)\n", imageBlocks.at(100).getCompParams());
     
 //    numOfPackRecv = 1200;
 //    updateFrame(recvFrame, imageBlocks);
@@ -425,10 +434,13 @@ void VideoCommunication::updateFrame(cv::Mat &baseFrame, std::vector<Block>  &bl
         block_y = (int ((bl->getSqId() * bl->getBlockSize()) /  params.width)) * bl->getBlockSize();
         tempROI = baseFrame(cv::Rect(block_x, block_y, bl->getBlockSize(), bl->getBlockSize()));
         bl->mat.copyTo(tempROI);
-        //if(bl->getCompParams() == 0)
-            //printf("(%d)\n", bl->getSqId());
+        if(bl->getCompParams() != 0){
+            printf("(%d)\n", bl->getSqId());
+            printf("(%d)\n", bl->getBlockSize());
+            printf("(%d)\n", bl->getCompParams());
             //printf("(%d,\t%d)\n", block_x, block_y);
             //bl->print();
+        }
     }
 }
 
