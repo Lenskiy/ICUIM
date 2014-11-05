@@ -104,7 +104,7 @@ public:
     Frame_Resolution determineResolution();
     void networkInit(unsigned short port_send, unsigned short port_recv, const std::string ip_address);
     
-    void initializeVideoParams(unsigned bs);
+    void initializeVideoParams(unsigned bs, unsigned width, unsigned height);
     
     void transmit();
     void receive();

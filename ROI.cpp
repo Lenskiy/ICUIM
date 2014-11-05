@@ -29,7 +29,7 @@ void ROI::analyze(const cv::Mat &frame){
     
     
     for (int i = 0; i < cascades.size(); i++){
-        cascades.at(i).detectMultiScale(frame_gray, temp_rects, 1.1, 3, 0|CV_HAAR_SCALE_IMAGE, cv::Size(50, 50) );
+        cascades.at(i).detectMultiScale(frame_gray, temp_rects, 1.1, 3, 0|CV_HAAR_SCALE_IMAGE, cv::Size(10, 10) );
         roi_rects.insert(roi_rects.end(), temp_rects.begin(), temp_rects.end());
         for (int j = 0; j < temp_rects.size(); j++)
             block_importance.insert(block_importance.end(), user_importance.at(i));

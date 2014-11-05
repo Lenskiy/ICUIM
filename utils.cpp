@@ -258,12 +258,13 @@ void VideoCommunication::setVideoSource(cv::VideoCapture vs){
     videoSource = vs;
 }
 
-void VideoCommunication::initializeVideoParams(unsigned bs){
+void VideoCommunication::initializeVideoParams(unsigned bs, unsigned width, unsigned height){
     params.blockSize = bs;
     
-    
-    params.width = 640;//sendFrame.cols;
-    params.height = 480;//sendFrame.rows;
+    //videoSource.grab();
+    //videoSource.retrieve(sendFrame);
+    params.width = width;//sendFrame.cols;
+    params.height = height;//sendFrame.rows;
     //params.image_type = sendFrame.type();
     params.image_type = CV_8UC3;
     
@@ -385,7 +386,7 @@ void VideoCommunication::getBlocks( const cv::Mat& Frame){
             //else
             //    bl.setCompParams(3);
             tmp = roi.isInRoi(bl);
-            bl.setCompParams(2 - roi.isInRoi(bl));
+            bl.setCompParams(3 - roi.isInRoi(bl));
             
             imageBlocks.at(sq_number) = bl;
             sq_number++;
