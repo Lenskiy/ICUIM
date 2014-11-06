@@ -22,7 +22,7 @@ int main(int argc, char *argv[]){
         //broadcast video
         VideoCommunication vc(atoi(argv[1]), atoi(argv[2]), argv[3]);
         vc.setVideoSource(videoSource);
-        vc.initializeVideoParams(8, WIDTH, HEIGHT);
+        vc.initializeVideoParams(16, WIDTH, HEIGHT);
         //vc.roi.addCascade("/usr/local/share/OpenCV/haarcascades/haarcascade_profileface.xml", 1);
         vc.roi.addCascade("/usr/local/share/OpenCV/haarcascades/haarcascade_frontalface_default.xml", 1);
         vc.roi.addCascade("/usr/local/share/OpenCV/haarcascades/haarcascade_eye.xml", 3);
@@ -37,7 +37,7 @@ int main(int argc, char *argv[]){
     }else if(argc == 3){
         //recieve video
         VideoCommunication vc(atoi(argv[1]), atoi(argv[2]));
-        vc.initializeVideoParams(8, WIDTH, HEIGHT);
+        vc.initializeVideoParams(16, WIDTH, HEIGHT);
         //vc.receivedVideoTransmissionParameters();
         vc.receive();
     }else

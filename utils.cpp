@@ -90,7 +90,7 @@ Block &Resample::decompress(Block &bl){
     cv::resize(bl.mat, temp, cv::Size(unCompressedSized, unCompressedSized)); //, 0, 0, cv::INTER_LANCZOS4  //Upsample
     Block compressed_block(temp);
     compressed_block.setSqId(bl.getSqId());
-    compressed_block.setCompParams(0);
+    compressed_block.setCompParams(bl.getCompParams());
     bl = compressed_block;
     bl.total_block_length = unCompressedSized * unCompressedSized * bl.mat.elemSize() + BLOCK_HEADER_LENGTH;
     return bl;
@@ -422,6 +422,13 @@ void VideoCommunication::updateFrame(cv::Mat &baseFrame, std::vector<Block>  &bl
         return;
     
     cv::Mat tempROI;
+    cv::Mat mask3(baseFrame.size(), CV_8UC1);
+    cv::Mat mask2(baseFrame.size(), CV_8UC1);
+    mask3 = cv::Scalar(0);
+    mask2 = cv::Scalar(0);
+    cv::Mat smoothed3(baseFrame.size(), CV_8UC3);
+    cv::Mat smoothed2(baseFrame.size(), CV_8UC3);
+    
     Block *bl;
     unsigned curIndex;
     //std::vector<Block>::iterator it = blocksReceieved.begin();
@@ -434,15 +441,31 @@ void VideoCommunication::updateFrame(cv::Mat &baseFrame, std::vector<Block>  &bl
         block_y = (int ((bl->getSqId() * bl->getBlockSize()) /  params.width)) * bl->getBlockSize();
         tempROI = baseFrame(cv::Rect(block_x, block_y, bl->getBlockSize(), bl->getBlockSize()));
         bl->mat.copyTo(tempROI);
-        if(bl->getCompParams() != 0){
-            printf("(%d)\n", bl->getSqId());
-            printf("(%d)\n", bl->getBlockSize());
-            printf("(%d)\n", bl->getCompParams());
-            //printf("(%d,\t%d)\n", block_x, block_y);
-            //bl->print();
+        if (bl->getCompParams() == 3 ) {
+            mask3(cv::Rect(block_x, block_y, bl->getBlockSize(), bl->getBlockSize())).setTo(cv::Scalar(1));
         }
+        if (bl->getCompParams() == 2 || bl->getCompParams() == 1) {
+            mask2(cv::Rect(block_x, block_y, bl->getBlockSize(), bl->getBlockSize())).setTo(cv::Scalar(1));
+        }
+//        if(bl->getCompParams() != 0 ){
+//            printf("(%d)\n", bl->getSqId());
+//            printf("(%d)\n", bl->getBlockSize());
+//            printf("(%d)\n", bl->getCompParams());
+//            //printf("(%d,\t%d)\n", block_x, block_y);
+//            //bl->print();
+//        }
     }
+    
+    //std::string windowName = "Mask";
+    //cv::namedWindow( windowName, CV_WINDOW_FREERATIO);
+
+    GaussianBlur(baseFrame, smoothed3, cv::Size(0, 0), 3, 3);
+    GaussianBlur(baseFrame, smoothed2, cv::Size(0, 0), 1, 1);
+    //cv::imshow( windowName, smoothed);
+    smoothed3.copyTo(baseFrame, mask3);
+    smoothed2.copyTo(baseFrame, mask2);
 }
+
 
 void VideoCommunication::transmit(){
     std::string windowName = "Broadcating Video Stream";
@@ -473,6 +496,7 @@ void VideoCommunication::receive(){
         //printf("Number of receieved of blocks: %ld\n", recv_blocks);
         updateFrame(recvFrame, blocksReceieved);
         cv::imshow(windowName, recvFrame ); // visualize frame to be set
+        
         if( cv::waitKey(30) >= 0 ) break;
     }while (1);
 }

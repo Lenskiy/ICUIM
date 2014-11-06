@@ -57,7 +57,7 @@ unsigned char ROI::isInRoi(Block &bl){
 //            imp_max = MAX(imp_max, *it_imp);
         delta_x = (block_x_center - (it->x + it->width/2));
         delta_y = (block_y_center - (it->y + it->height/2));
-        if( delta_x * delta_x + delta_y * delta_y < (it->width * it->height)/4)
+        if( delta_x * delta_x + delta_y * delta_y < (1.5*(it->width * it->height)/4))
             imp_max = MAX(imp_max, *it_imp);
     }
     return imp_max;
