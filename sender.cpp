@@ -24,8 +24,8 @@ int main(int argc, char *argv[]){
         vc.setVideoSource(videoSource);
         vc.initializeVideoParams(16, WIDTH, HEIGHT);
         //vc.roi.addCascade("/usr/local/share/OpenCV/haarcascades/haarcascade_profileface.xml", 1);
-        vc.roi.addCascade("/usr/local/share/OpenCV/haarcascades/haarcascade_frontalface_default.xml", 1);
-        vc.roi.addCascade("/usr/local/share/OpenCV/haarcascades/haarcascade_eye.xml", 3);
+        vc.roi.addCascade("/usr/local/share/OpenCV/haarcascades/haarcascade_frontalface_default.xml", 10);
+        vc.roi.addCascade("/usr/local/share/OpenCV/haarcascades/haarcascade_eye.xml", 12);
         //vc.roi.addCascade("/usr/local/share/OpenCV/haarcascades/haarcascade_eye_tree_eyeglasses.xml", 3);
         //vc.roi.addCascade("/usr/local/share/OpenCV/haarcascades/haarcascade_profileface.xml", 1);
 

@@ -153,7 +153,7 @@ Block &JPEGCompression::compress(Block &blk){
     
     cv::vector<int> params;
     params.push_back(CV_IMWRITE_JPEG_QUALITY);
-    params.push_back(20 * blk.getCompParams());
+    params.push_back(5 * blk.getCompParams());
     cv::imencode(".jpg", blk.mat, buf, params);
 
 //    for (int i = 0; i < 612; i++) {
@@ -201,7 +201,7 @@ Block &JPEGCompression::decompress(Block &blk){
 //    free(buf);
 //    return blk;
 //    
-    memcpy(block_buffer, jpg_headers[20 * blk.getCompParams()], 612);
+    memcpy(block_buffer, jpg_headers[5 * blk.getCompParams()], 612);
     memcpy(block_buffer + 612, blk.mat.data, blk.total_block_length - BLOCK_HEADER_LENGTH);
 
 //    for (int i = 0; i < 612; i++) {
@@ -505,7 +505,7 @@ void VideoCommunication::getBlocks( const cv::Mat& Frame){
             //else
             //    bl.setCompParams(3);
             tmp = roi.isInRoi(bl);
-            bl.setCompParams(5 - roi.isInRoi(bl));
+            bl.setCompParams(roi.isInRoi(bl));
             
             imageBlocks.at(sq_number) = bl;
             sq_number++;
@@ -537,12 +537,12 @@ void VideoCommunication::updateFrame(cv::Mat &baseFrame, std::vector<Block>  &bl
         return;
     
     cv::Mat tempROI;
-    cv::Mat mask3(baseFrame.size(), CV_8UC1);
-    cv::Mat mask2(baseFrame.size(), CV_8UC1);
-    mask3 = cv::Scalar(0);
-    mask2 = cv::Scalar(0);
-    cv::Mat smoothed3(baseFrame.size(), CV_8UC3);
-    cv::Mat smoothed2(baseFrame.size(), CV_8UC3);
+//    cv::Mat mask3(baseFrame.size(), CV_8UC1);
+//    cv::Mat mask2(baseFrame.size(), CV_8UC1);
+//    mask3 = cv::Scalar(0);
+//    mask2 = cv::Scalar(0);
+//    cv::Mat smoothed3(baseFrame.size(), CV_8UC3);
+//    cv::Mat smoothed2(baseFrame.size(), CV_8UC3);
     
     Block *bl;
     unsigned curIndex;
@@ -556,10 +556,10 @@ void VideoCommunication::updateFrame(cv::Mat &baseFrame, std::vector<Block>  &bl
         block_y = (int ((bl->getSqId() * bl->getBlockSize()) /  params.width)) * bl->getBlockSize();
         tempROI = baseFrame(cv::Rect(block_x, block_y, bl->getBlockSize(), bl->getBlockSize()));
         bl->mat.copyTo(tempROI);
-//        if (bl->getCompParams() == 3 ) {
+//        if (bl->getCompParams()  < 6 ) {
 //            mask3(cv::Rect(block_x, block_y, bl->getBlockSize(), bl->getBlockSize())).setTo(cv::Scalar(1));
 //        }
-//        if (bl->getCompParams() == 2 || bl->getCompParams() == 1) {
+//        if (bl->getCompParams() == 6 ) {
 //            mask2(cv::Rect(block_x, block_y, bl->getBlockSize(), bl->getBlockSize())).setTo(cv::Scalar(1));
 //        }
 //        if(bl->getCompParams() != 0 ){
@@ -574,11 +574,11 @@ void VideoCommunication::updateFrame(cv::Mat &baseFrame, std::vector<Block>  &bl
     //std::string windowName = "Mask";
     //cv::namedWindow( windowName, CV_WINDOW_FREERATIO);
 
-    //GaussianBlur(baseFrame, smoothed3, cv::Size(0, 0), 3, 3);
-    //GaussianBlur(baseFrame, smoothed2, cv::Size(0, 0), 1, 1);
+//    GaussianBlur(baseFrame, smoothed3, cv::Size(0, 0), 1, 1);
+//    GaussianBlur(baseFrame, smoothed2, cv::Size(0, 0), 1, 1);
     //cv::imshow( windowName, smoothed);
-    //smoothed3.copyTo(baseFrame, mask3);
-    //smoothed2.copyTo(baseFrame, mask2);
+//    smoothed3.copyTo(baseFrame, mask3);
+//    smoothed2.copyTo(baseFrame, mask2);
 }
 
 

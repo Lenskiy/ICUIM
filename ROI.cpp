@@ -46,7 +46,7 @@ unsigned char ROI::isInRoi(Block &bl){
     unsigned block_x_center = ((bl.getSqId() * bl.getBlockSize()) %  vc->params.width) + bl.getBlockSize()/2;
     unsigned block_y_center = (int ((bl.getSqId() * bl.getBlockSize()) /  vc->params.width)) * bl.getBlockSize() + bl.getBlockSize()/2;
     int delta_x, delta_y;
-    unsigned char imp_max = 0;
+    unsigned char imp_max = 8;
     std::vector<cv::Rect>::iterator it;
     std::vector<unsigned char>::iterator it_imp;
     
