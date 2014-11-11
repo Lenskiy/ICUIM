@@ -62,12 +62,25 @@ public:
     
 };
 
+class JPEGCompression : Compression{
+protected:
+    VideoCommunication *vc;
+    uchar **jpg_headers;
+    uchar *block_buffer;
+    cv::vector<uchar> buf;
+    // int decode(Block &bl);
+public:
+    JPEGCompression(VideoCommunication *vc);
+    virtual Block &compress(Block &blk);
+    virtual Block &decompress(Block &blk);
+    
+};
+
+
 class VideoCommunication{
 private:
     int socket_to_send, socket_to_recv;
     long num_byte_recv, num_byte_sent;
-    
-
     
     struct addrinfo serv_addr, *res_serv_addr;
     struct addrinfo clie_addr, *res_clie_addr;
@@ -80,7 +93,7 @@ private:
     std::vector<Block> blocksReceieved; //container for blocks to be received
     
     VideoParams params;
-    Resample compress;
+    JPEGCompression compress;
     cv::VideoCapture videoSource;
 
     

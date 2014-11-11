@@ -61,6 +61,7 @@ public:
     
     friend class VideoCommunication;
     friend class Resample;
+    friend class JPEGCompression;
 };
 
 #endif

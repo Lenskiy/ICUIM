@@ -8,40 +8,62 @@
 
 #include "utils.h"
 #include "Block.h"
+#include <jpeglib.h>
+#include <setjmp.h>
+
+
+typedef struct _JFIFHeader
+{
+    uchar SOI[2];          /* 00h  Start of Image Marker     */
+    uchar APP0[2];         /* 02h  Application Use Marker    */
+    uchar Length[2];       /* 04h  Length of APP0 Field      */
+    uchar Identifier[5];   /* 06h  "JFIF" (zero terminated) Id String */
+    uchar Version[2];      /* 07h  JFIF Format Revision      */
+    uchar Units;           /* 09h  Units used for Resolution */
+    uchar Xdensity[2];     /* 0Ah  Horizontal Resolution     */
+    uchar Ydensity[2];     /* 0Ch  Vertical Resolution       */
+    uchar XThumbnail;      /* 0Eh  Horizontal Pixel Count    */
+    uchar YThumbnail;      /* 0Fh  Vertical Pixel Count      */
+} JFIFHEAD;
+
+void printQTables(const unsigned char *buf, unsigned len){
+    
+    unsigned char zigzag[] = {0,11,15,16,14,15,27,28,2,4,7,13,16,26,29,42,3,8,12,17,25,30,41,43,9,11,18,24,31,40,44,53,10,19,23,32,39,45,52,54,20,22,33,38,46,51,55,60,21,34,37,47,50,56,59,61,35,36,48,49,57,58,62,63};
+    
+    unsigned Height,Width;
+    int k = 4;
+    JFIFHEAD *jc = (JFIFHEAD *) (buf);
+    unsigned short block_length = jc->Length[0] * 256 + jc->Length[1];
+    do{
+        k += block_length;
+        if(buf[k + 1] == 0xC0){
+            Height = buf[k + 5] * 256 + buf[k + 6];
+            Width =  buf[k + 7] * 256 + buf[k + 8];
+            k += 2;
+            block_length = buf[k] * 256 + buf[k + 1];
+        }else if(buf[k + 1] == 0xDB){
+            printf("\n--------- QUANTIZATION TABLE ---------\n");
+            for (int j = 0; j < 8; j++) {
+                for (int i = 0; i < 8; i++) {
+                    printf("%u\t", buf[k + 4 +  zigzag[j * 8 + i]]);
+                }
+                printf("\n");
+            }
+            k += 2;
+            block_length = buf[k] * 256 + buf[k + 1];
+        }else{
+            k += 2;
+            block_length = buf[k] * 256 + buf[k + 1];
+        }
+        
+    }while (k < len);
+}
+
 
 Resample::Resample(VideoCommunication *vc):vc(vc){
 }
 
-/*
- //bl.print();
- //printf("\n\n");
- unsigned compressionFactor = 1 << bl.getCompParams();
- cv::Rect region_with_data(0, 0, (bl.getBlockSize() * bl.getBlockSize())/(compressionFactor * compressionFactor), 1);
- cv::Mat temp(bl.mat);
- //bl.mat.copyTo(temp);
- cv::resize(temp, temp, cv::Size(bl.getBlockSize()/compressionFactor, bl.getBlockSize()/compressionFactor)); //, 0, 0, cv::INTER_LANCZOS4
- temp = temp.reshape(0, 1);
- bl.mat = bl.mat.reshape(0,1);
- cv::Mat compressed = bl.mat(region_with_data);
- //bl.mat.cols = bl.mat.rows = bl.mat.cols/(1 << bl.getCompParams());
- temp.copyTo(compressed);
- if (bl.getSqId() == 5) {
- printf("\n\n");
- Block tempbl(compressed);
- tempbl.mat = tempbl.mat.reshape(0, bl.getBlockSize()/compressionFactor);
- tempbl.print();
- printf("\n%d",tempbl.mat.isContinuous());
- }
- bl.mat = bl.mat.reshape(0,bl.getBlockSize());
- //temp.copySize(bl.mat);
- bl.total_block_length = (bl.getBlockSize() * bl.getBlockSize())/(compressionFactor * compressionFactor) * bl.mat.elemSize() + BLOCK_HEADER_LENGTH;
- if (bl.getSqId() == 0) {
- //bl.print();
- //printf("\n\n");
- }
- temp.release();
- return bl;
- */
+
 Block &Resample::compress(Block &bl){
     unsigned compressedSized = bl.getBlockSize() / (1 << bl.getCompParams());
     //Block compressed_block
@@ -56,35 +78,7 @@ Block &Resample::compress(Block &bl){
     return bl;
 }
 
-/*
- //bl.print();
- unsigned compressionFactor = 1 << bl.getCompParams();
- cv::Rect region_with_data(0, 0, (bl.getBlockSize() * bl.getBlockSize())/(compressionFactor * compressionFactor), 1);
- //bl.mat.cols = bl.mat.rows = bl.getBlockSize()/(1 << bl.getCompParams());
- cv::Mat temp = bl.mat.reshape(bl.mat.channels(), 1);
- //bl.print();
- temp = temp(region_with_data);
- //bl.mat.copyTo(temp);
- temp = temp.reshape(0,bl.getBlockSize()/compressionFactor);
- //(bl.getBlockSize()/(1 << bl.getCompParams()), bl.getBlockSize()/(1 << bl.getCompParams()), bl.mat.type())
- //If size of both temp and bl.mat is the same no new memory will be allocated.
- if (bl.getSqId() == 5) {
- printf("\n\n");
- Block tempbl(temp);
- tempbl.print();
- printf("\n%d",tempbl.mat.isContinuous());
- }
- cv::resize(temp, bl.mat, cv::Size(bl.getBlockSize(), bl.getBlockSize())); //, 0, 0, cv::INTER_LANCZOS4  //Upsample
- //bl.mat = bl.mat.reshape(0, bl.getBlockSize());
- //temp.copyTo(bl.mat);
- bl.setCompParams(0);
- bl.total_block_length = bl.mat.cols * bl.mat.rows * bl.mat.elemSize() + BLOCK_HEADER_LENGTH;
- temp.release();
- return bl;
- */
 Block &Resample::decompress(Block &bl){
-    //unsigned compressedSized = bl.getBlockSize() / (1 << bl.getCompParams());
-    
     unsigned unCompressedSized = bl.getBlockSize() * (1 << bl.getCompParams());
     cv::Mat temp;
     cv::resize(bl.mat, temp, cv::Size(unCompressedSized, unCompressedSized)); //, 0, 0, cv::INTER_LANCZOS4  //Upsample
@@ -95,20 +89,141 @@ Block &Resample::decompress(Block &bl){
     bl.total_block_length = unCompressedSized * unCompressedSized * bl.mat.elemSize() + BLOCK_HEADER_LENGTH;
     return bl;
 }
-/*
-int Resample::decode(Block &bl){
-    switch ((bl.total_block_length - BLOCK_HEADER_LENGTH) / 3) {
-        case 1024:  bl.mat.rows = bl.mat.cols = 32;  break;
-        case 256:   bl.mat.rows = bl.mat.cols = 16;  break;
-        case 64:    bl.mat.rows = bl.mat.cols = 8;   break;
-        case 16:    bl.mat.rows = bl.mat.cols = 4;   break;
-        case 4:     bl.mat.rows = bl.mat.cols = 2;   break;
-        case 1:     bl.mat.rows = bl.mat.cols = 1;   break;
-        default: return -1; break;
+
+
+JPEGCompression::JPEGCompression(VideoCommunication *vc):vc(vc){
+    cv::Mat t = cv::Mat(16,16, CV_8UC3, cv::Scalar(0,0,0));
+    
+    jpg_headers = (uchar **) malloc(101 * sizeof(uchar *));
+    cv::vector<int> params;
+
+    for (int q = 1; q <= 100; q++) {
+        params.push_back(CV_IMWRITE_JPEG_QUALITY);
+        params.push_back(q);
+        
+        jpg_headers[q] = (uchar *)malloc(612); //610 bytes is occupied by the JPG header
+        cv::imencode(".jpg", t, buf, params);
+        memcpy(jpg_headers[q], buf.data(), 612);
+        printf("q = %d", q);
+        printQTables(buf.data(), 612);
+        
+        params.pop_back();
+        params.pop_back();
     }
-    return 1;
+    
+    block_buffer = (uchar *)malloc(128 * 128 * 3); // just allocote memory to store compressed block
 }
-*/
+
+
+
+Block &JPEGCompression::compress(Block &blk){
+    
+
+//    struct jpeg_compress_struct cinfo;
+//    struct jpeg_error_mgr jerr;
+//    JSAMPROW row_pointer[1];	/* pointer to JSAMPLE row[s] */
+//    
+//    cinfo.err = jpeg_std_error(&jerr);
+//    jpeg_create_compress(&cinfo);
+//    unsigned long buf_size = 0;
+//    unsigned char *buf = NULL;
+//    jpeg_mem_dest(&cinfo, &buf, &buf_size);
+//    cinfo.image_width = blk.getBlockSize(); 	/* image width and height, in pixels */
+//    cinfo.image_height = blk.getBlockSize();
+//    cinfo.input_components = 3;		/* # of color components per pixel */
+//    cinfo.in_color_space = JCS_RGB; 	/* colorspace of input image */
+//    jpeg_set_defaults(&cinfo);
+//    jpeg_set_quality(&cinfo, 10, TRUE /* limit to baseline-JPEG values */);
+//    jpeg_start_compress(&cinfo, TRUE);
+//    int row_stride = blk.getBlockSize() * 3;
+//    
+//    while (cinfo.next_scanline < cinfo.image_height) {
+//        /* jpeg_write_scanlines expects an array of pointers to scanlines.
+//         * Here the array is only one element long, but you could pass
+//         * more than one scanline at a time if that's more convenient.
+//         */
+//        row_pointer[0] = (blk.data.get() + BLOCK_HEADER_LENGTH + cinfo.next_scanline * row_stride);
+//        (void) jpeg_write_scanlines(&cinfo, row_pointer, 1);
+//    }
+//    jpeg_finish_compress(&cinfo);
+//    memcpy(blk.data.get(), buf, buf_size);
+//    free(buf);
+//    jpeg_destroy_compress(&cinfo);
+//    return blk;
+    
+    cv::vector<int> params;
+    params.push_back(CV_IMWRITE_JPEG_QUALITY);
+    params.push_back(20 * blk.getCompParams());
+    cv::imencode(".jpg", blk.mat, buf, params);
+
+//    for (int i = 0; i < 612; i++) {
+//        printf("%x ", (unsigned)buf[i]);
+//    }
+    
+//    for (int i = 612; i < buf.size(); i++) {
+//        printf("%x ", (unsigned)buf[i]);
+//    }
+    for (int i = 612; i < buf.size(); i++) {
+        blk.mat.data[i - 612] = buf[i];
+    }
+    blk.total_block_length = buf.size() + BLOCK_HEADER_LENGTH - 612;
+    return blk;
+ 
+}
+
+
+
+Block &JPEGCompression::decompress(Block &blk){
+//    struct jpeg_decompress_struct cinfo;
+//    JSAMPARRAY buffer;		/* Output row buffer */
+//    int row_stride;		/* physical row width in output buffer */
+//    jpeg_create_decompress(&cinfo);
+//    unsigned long buf_size = NULL;
+//    unsigned char *buf = NULL;
+//    jpeg_mem_src(&cinfo, blk.data.get() + BLOCK_HEADER_LENGTH, 100);
+//    (void) jpeg_read_header(&cinfo, TRUE);
+//    (void) jpeg_start_decompress(&cinfo);
+//     row_stride = cinfo.output_width * cinfo.output_components;
+//    buffer = (*cinfo.mem->alloc_sarray)
+//    ((j_common_ptr) &cinfo, JPOOL_IMAGE, row_stride, 1);
+//    while (cinfo.output_scanline < cinfo.output_height) {
+//        /* jpeg_read_scanlines expects an array of pointers to scanlines.
+//         * Here the array is only one element long, but you could ask for
+//         * more than one scanline at a time if that's more convenient.
+//         */
+//        (void) jpeg_read_scanlines(&cinfo, buffer, 1);
+//        /* Assume put_scanline_someplace wants a pointer and sample count. */
+//        //put_scanline_someplace(*blk.data.get(), row_stride);
+//    }
+//    (void) jpeg_finish_decompress(&cinfo);
+//    //jpeg_destroy_decompress(&cinfo); // do not call it, the memory will be reused
+//    memcpy(blk.data.get(), buf, buf_size);
+//    free(buf);
+//    return blk;
+//    
+    memcpy(block_buffer, jpg_headers[20 * blk.getCompParams()], 612);
+    memcpy(block_buffer + 612, blk.mat.data, blk.total_block_length - BLOCK_HEADER_LENGTH);
+
+//    for (int i = 0; i < 612; i++) {
+//        printf("%x ", (unsigned)block_buffer[i]);
+//    }
+
+    
+//    for (int i = 0; i < blk.total_block_length - BLOCK_HEADER_LENGTH + 612; i++) {
+//        printf("%x ", (unsigned)block_buffer[i]);
+//    }
+    
+//    for (int i = 612; i < blk.total_block_length - BLOCK_HEADER_LENGTH + 612; i++) {
+//        printf("%x ", (unsigned)block_buffer[i]);
+//    }
+    
+    cv::Mat temp_mat = cv::imdecode(cv::Mat(1, blk.total_block_length - BLOCK_HEADER_LENGTH + 612, CV_8UC1,block_buffer), CV_LOAD_IMAGE_COLOR);
+    memcpy(blk.mat.data, temp_mat.data, temp_mat.cols * temp_mat.rows * 3);
+    blk.total_block_length = blk.getBlockSize() * blk.getBlockSize() * blk.mat.elemSize() + BLOCK_HEADER_LENGTH;
+    return blk;
+     
+}
+
 
 VideoCommunication::VideoCommunication():roi(this),compress(this){
     socket_to_send = 0;
@@ -390,7 +505,7 @@ void VideoCommunication::getBlocks( const cv::Mat& Frame){
             //else
             //    bl.setCompParams(3);
             tmp = roi.isInRoi(bl);
-            bl.setCompParams(3 - roi.isInRoi(bl));
+            bl.setCompParams(5 - roi.isInRoi(bl));
             
             imageBlocks.at(sq_number) = bl;
             sq_number++;
@@ -441,12 +556,12 @@ void VideoCommunication::updateFrame(cv::Mat &baseFrame, std::vector<Block>  &bl
         block_y = (int ((bl->getSqId() * bl->getBlockSize()) /  params.width)) * bl->getBlockSize();
         tempROI = baseFrame(cv::Rect(block_x, block_y, bl->getBlockSize(), bl->getBlockSize()));
         bl->mat.copyTo(tempROI);
-        if (bl->getCompParams() == 3 ) {
-            mask3(cv::Rect(block_x, block_y, bl->getBlockSize(), bl->getBlockSize())).setTo(cv::Scalar(1));
-        }
-        if (bl->getCompParams() == 2 || bl->getCompParams() == 1) {
-            mask2(cv::Rect(block_x, block_y, bl->getBlockSize(), bl->getBlockSize())).setTo(cv::Scalar(1));
-        }
+//        if (bl->getCompParams() == 3 ) {
+//            mask3(cv::Rect(block_x, block_y, bl->getBlockSize(), bl->getBlockSize())).setTo(cv::Scalar(1));
+//        }
+//        if (bl->getCompParams() == 2 || bl->getCompParams() == 1) {
+//            mask2(cv::Rect(block_x, block_y, bl->getBlockSize(), bl->getBlockSize())).setTo(cv::Scalar(1));
+//        }
 //        if(bl->getCompParams() != 0 ){
 //            printf("(%d)\n", bl->getSqId());
 //            printf("(%d)\n", bl->getBlockSize());
@@ -459,11 +574,11 @@ void VideoCommunication::updateFrame(cv::Mat &baseFrame, std::vector<Block>  &bl
     //std::string windowName = "Mask";
     //cv::namedWindow( windowName, CV_WINDOW_FREERATIO);
 
-    GaussianBlur(baseFrame, smoothed3, cv::Size(0, 0), 3, 3);
-    GaussianBlur(baseFrame, smoothed2, cv::Size(0, 0), 1, 1);
+    //GaussianBlur(baseFrame, smoothed3, cv::Size(0, 0), 3, 3);
+    //GaussianBlur(baseFrame, smoothed2, cv::Size(0, 0), 1, 1);
     //cv::imshow( windowName, smoothed);
-    smoothed3.copyTo(baseFrame, mask3);
-    smoothed2.copyTo(baseFrame, mask2);
+    //smoothed3.copyTo(baseFrame, mask3);
+    //smoothed2.copyTo(baseFrame, mask2);
 }
 
 
