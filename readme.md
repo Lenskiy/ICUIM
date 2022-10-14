@@ -1,1 +1,1 @@
-[![Stories in Ready](https://badge.waffle.io/Lenskiy/ICUIM.png?label=ready&title=Ready)](http://waffle.io/Lenskiy/ICUIM)
+For the implementation details see [![Video transmission using multi-level content aware compression based on object detection Contemporary Engineering Sciences, Vol. 7, 2014, no. 32, 1739-1745](http://www.m-hikari.com/ces/ces2014/ces29-32-2014/18lenskiyCES29-32-2014.pdf)](http://www.m-hikari.com/ces/ces2014/ces29-32-2014/18lenskiyCES29-32-2014.pdf)
